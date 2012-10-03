@@ -18,9 +18,18 @@
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
+#hover-preview-container .image-preview {
+    width: 100px;
+    max-height: 100px;
+}
+
+#hover-preview-container .image-preview img {
+    max-width: 100%;
+}
+
 .preview-bubble {
     border-radius: 10px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .preview-bubble:before {

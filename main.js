@@ -20,21 +20,18 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50 */
+/*jslint vars: true, plusplus: true, devel: true, nomen: true,  regexp: true, indent: 4, maxerr: 50 */
 /*global define, brackets, $, window, tinycolor */
 
 define(function (require, exports, module) {
     "use strict";
     
-    // Constants
-    var HOVER_TIMEOUT = 250;
-    
     // Brackets modules
     var EditorManager       = brackets.getModule("editor/EditorManager"),
-        ExtensionUtils      = brackets.getModule("utils/ExtensionUtils");
+        ExtensionUtils      = brackets.getModule("utils/ExtensionUtils"),
+        ProjectManager      = brackets.getModule("project/ProjectManager");
     
-    var mouseMoveTimeout,   // ID of mouse move timeout
-        previewMark,        // CodeMirror marker highlighting the preview text
+    var previewMark,        // CodeMirror marker highlighting the preview text
         $previewContainer;  // Preview container
     
     function hidePreview() {
@@ -54,10 +51,6 @@ define(function (require, exports, module) {
             left: xpos - $previewContainer.width() / 2 - 10,
             top: ypos - $previewContainer.height() - 38
         });
-    }
-    
-    function timeoutHandler(event) {
-        mouseMoveTimeout = null;
     }
     
     function divContainsMouse($div, event) {
@@ -82,10 +75,10 @@ define(function (require, exports, module) {
         // TODO: Support plugin providers. For now we just hard-code...
         
         // Check for color
+        var cm = editor._codeMirror;
         var colorRegEx = /#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\( ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?\)|rgba\( ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b(1|0|0\.[0-9]{1,3}) ?\)|hsl\( ?\b([0-9]{1,2}|[12][0-9]{2}|3[0-5][0-9]|360)\b ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b([0-9]{1,2}|100)\b% ?\)|hsla\( ?\b([0-9]{1,2}|[12][0-9]{2}|3[0-5][0-9]|360)\b ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b(1|0|0\.[0-9]{1,3}) ?\)/i;
         var match = line.match(colorRegEx);
         if (match && pos.ch >= match.index && pos.ch <= match.index + match[0].length) {
-            var cm = editor._codeMirror;
             var preview = "<div class='color-swatch' style='background:" + match[0] + ";'></div>";
             var startPos = {line: pos.line, ch: match.index},
                 endPos = {line: pos.line, ch: match.index + match[0].length},
@@ -95,29 +88,61 @@ define(function (require, exports, module) {
             xPos = (cm.charCoords(endPos).x - startCoords.x) / 2 + startCoords.x;
             showPreview(preview, xPos, startCoords.y);
             previewMark = cm.markText(
-                {line: pos.line, ch: match.index},
-                {line: pos.line, ch: match.index + match[0].length},
+                startPos,
+                endPos,
                 "preview-highlight"
             );
             return;
         }
+        
+        // Check for image name
+        var urlRegEx = /url\(([^\)]*)\)/;
+        var tokenString;
+        var urlMatch = line.match(urlRegEx);
+        if (urlMatch && pos.ch >= urlMatch.indx && pos.ch <= urlMatch.index + urlMatch[0].length) {
+            tokenString = urlMatch[1];
+        } else if (token.className === "string") {
+            tokenString = token.string;
+        }
+        
+        if (tokenString) {
+            // Strip quotes, if present
+            var quotesRegEx = /(\'|\")?([^(\'|\")]*)(\'|\")?/;
+            tokenString = tokenString.replace(quotesRegEx, "$2");
+            
+            if (/(\.gif|\.png|\.jpg|\.jpeg|\.svg)$/i.test(tokenString)) {
+                var sPos, ePos;
+                var docPath = editor.document.file.fullPath;
+                var imgPath = docPath.substr(0, docPath.lastIndexOf("/") + 1) + tokenString;
+                
+                if (urlMatch) {
+                    sPos = {line: pos.line, ch: urlMatch.index};
+                    ePos = {line: pos.line, ch: urlMatch.index + urlMatch[0].length};
+                } else {
+                    sPos = {line: pos.line, ch: token.start};
+                    ePos = {line: pos.line, ch: token.end};
+                }
+                
+                if (imgPath) {
+                    var imgPreview = "<div class='image-preview'><img src=\"file:///" + imgPath + "\"></div>";
+                    var coord = cm.charCoords(sPos);
+                    showPreview(imgPreview, (cm.charCoords(ePos).x - coord.x) / 2 + coord.x, coord.y);
+                    previewMark = cm.markText(
+                        sPos,
+                        ePos,
+                        "preview-highlight"
+                    );
+                    return;
+                }
+            }
+        }
+        
         
         hidePreview();
         // showPreviewForToken(token, line, event);
     }
     
     function handleMouseMove(event) {
-        /*
-        // Clear existing timeout
-        if (mouseMoveTimeout) {
-            window.clearTimeout(mouseMoveTimeout);
-            mouseMoveTimeout = null;
-        }
-        
-        // Set new timeout
-        mouseMoveTimeout = window.setTimeout(timeoutHandler, HOVER_TIMEOUT);
-        */
-        
         // Figure out which editor we are over
         var fullEditor = EditorManager.getCurrentFullEditor();
         
@@ -169,4 +194,6 @@ define(function (require, exports, module) {
     ExtensionUtils.loadStyleSheet(module, "HoverPreview.css");
     
     // TODO: Add command/keyboard shortcut for showing preview at the current cursor location
+    
+    // TODO: Add UI for enabling/disabling
 });
