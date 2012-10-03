@@ -186,6 +186,7 @@ define(function (require, exports, module) {
     
     // Init: Listen to all mousemoves in the editor area
     $("#editor-holder")[0].addEventListener("mousemove", handleMouseMove, true);
+    $("#editor-holder")[0].addEventListener("scroll", hidePreview, true);
     
     // Create the preview container
     $previewContainer = $("<div id='hover-preview-container' class='preview-bubble'>").appendTo($("body"));
