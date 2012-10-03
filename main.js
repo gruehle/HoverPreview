@@ -127,6 +127,13 @@ define(function (require, exports, module) {
                     var imgPreview = "<div class='image-preview'><img src=\"file:///" + imgPath + "\"></div>";
                     var coord = cm.charCoords(sPos);
                     showPreview(imgPreview, (cm.charCoords(ePos).x - coord.x) / 2 + coord.x, coord.y);
+                    
+                    // Hide the preview container until the image is loaded.
+                    $previewContainer.hide();
+                    $previewContainer.find("img").on("load", function () {
+                        $previewContainer.show();
+                    });
+                    
                     previewMark = cm.markText(
                         sPos,
                         ePos,
@@ -167,7 +174,7 @@ define(function (require, exports, module) {
         
         // Check main editor
         if (!editor) {
-            if (divContainsMouse($(fullEditor._codeMirror.getWrapperElement()), event)) {
+            if (divContainsMouse($(fullEditor.getRootElement()), event)) {
                 editor = fullEditor;
             }
         }
