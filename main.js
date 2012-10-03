@@ -27,11 +27,14 @@ define(function (require, exports, module) {
     "use strict";
     
     // Brackets modules
-    var EditorManager       = brackets.getModule("editor/EditorManager"),
+    var CommandManager      = brackets.getModule("command/CommandManager"),
+        EditorManager       = brackets.getModule("editor/EditorManager"),
         ExtensionUtils      = brackets.getModule("utils/ExtensionUtils"),
+        Menus               = brackets.getModule("command/Menus"),
         ProjectManager      = brackets.getModule("project/ProjectManager");
     
-    var previewMark,        // CodeMirror marker highlighting the preview text
+    var enabled = true,     // Only show preview if true
+        previewMark,        // CodeMirror marker highlighting the preview text
         $previewContainer;  // Preview container
     
     function hidePreview() {
@@ -60,14 +63,6 @@ define(function (require, exports, module) {
                 event.clientX <= offset.left + $div.width() &&
                 event.clientY >= offset.top &&
                 event.clientY <= offset.top + $div.height());
-    }
-    
-    function showPreviewForToken(token, line, event) {
-        if (token && token.string && token.className) {
-            showPreview(line + token.string + "," + token.className, event.clientX, event.clientY);
-        } else {
-            hidePreview();
-        }
     }
     
     function queryPreviewProviders(editor, pos, token, line, event) {
@@ -146,10 +141,13 @@ define(function (require, exports, module) {
         
         
         hidePreview();
-        // showPreviewForToken(token, line, event);
     }
     
     function handleMouseMove(event) {
+        if (!enabled) {
+            return;
+        }
+        
         // Figure out which editor we are over
         var fullEditor = EditorManager.getCurrentFullEditor();
         
@@ -201,7 +199,24 @@ define(function (require, exports, module) {
     // Load our stylesheet
     ExtensionUtils.loadStyleSheet(module, "HoverPreview.css");
     
-    // TODO: Add command/keyboard shortcut for showing preview at the current cursor location
-    
-    // TODO: Add UI for enabling/disabling
+    /*Open Brackets src command*/
+    var ENABLE_HOVER_PREVIEW      = "Enable Hover Preview";
+    var CMD_ENABLE_HOVER_PREVIEW  = "gruehle.enableHoverPreview";
+
+    function updateMenuItemCheckmark() {
+        CommandManager.get(CMD_ENABLE_HOVER_PREVIEW).setChecked(enabled);
+    }
+
+    function toggleEnableHoverPreview() {
+        enabled = !enabled;
+        if (!enabled) {
+            hidePreview();
+        }
+        updateMenuItemCheckmark();
+    }
+      
+    CommandManager.register(ENABLE_HOVER_PREVIEW, CMD_ENABLE_HOVER_PREVIEW, toggleEnableHoverPreview);
+    var menu = Menus.getMenu(Menus.AppMenuBar.VIEW_MENU);
+    menu.addMenuItem(CMD_ENABLE_HOVER_PREVIEW);
+    updateMenuItemCheckmark();
 });
