@@ -9,6 +9,19 @@ me know, or even better, submit a pull request.
 Copy this folder into the Brackets `extensions/user` folder and restart Brackets. When the cursor is over a gradient value, color value or 
 an image name, a preview of the value is shown.
 
+## Screenshots
+
+Here are a few screenshots of the extension in action.
+
+Hovering over a color value:
+<img src="https://raw.github.com/gruehle/HoverPreview/master/screenshots/Color.png" />
+
+Hovering over a gradient:
+<img src="https://raw.github.com/gruehle/HoverPreview/master/screenshots/Gradient.png" />
+
+Hovering over an image filename:
+<img src="https://raw.github.com/gruehle/HoverPreview/master/screenshots/Image.png" />
+
 ## Future
 
 Add plug-in mechanism so other value providers can be added.
