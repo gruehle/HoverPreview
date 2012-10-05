@@ -68,13 +68,33 @@ define(function (require, exports, module) {
     function queryPreviewProviders(editor, pos, token, line, event) {
         
         // TODO: Support plugin providers. For now we just hard-code...
+        var cm = editor._codeMirror;
+        
+        // Check for gradient
+        var gradientRegEx = /-webkit-gradient\([^;]*;?|(-moz-|-ms-|-o-|-webkit-|\s)(linear-gradient\([^;]*);?|(-moz-|-ms-|-o-|-webkit-)(radial-gradient\([^;]*);?/;
+        var gradientMatch = line.match(gradientRegEx);
+        var prefix = "";
+        var colorValue;
+        
+        // If it was a linear-gradient or radial-gradient variant, prefix with "-webkit-" so it
+        // shows up correctly in Brackets.
+        if (gradientMatch && gradientMatch[0].indexOf("-webkit-gradient") !== 0) {
+            prefix = "-webkit-";
+        }
+        
+        // For prefixed gradients, use the non-prefixed value as the color value. "-webkit-" will be added 
+        // before this value
+        if (gradientMatch && gradientMatch[2]) {
+            colorValue = gradientMatch[2];
+        }
         
         // Check for color
-        var cm = editor._codeMirror;
         var colorRegEx = /#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\( ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?\)|rgba\( ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b(1|0|0\.[0-9]{1,3}) ?\)|hsl\( ?\b([0-9]{1,2}|[12][0-9]{2}|3[0-5][0-9]|360)\b ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b([0-9]{1,2}|100)\b% ?\)|hsla\( ?\b([0-9]{1,2}|[12][0-9]{2}|3[0-5][0-9]|360)\b ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b(1|0|0\.[0-9]{1,3}) ?\)/i;
-        var match = line.match(colorRegEx);
+        var colorMatch = line.match(colorRegEx);
+        
+        var match = gradientMatch || colorMatch;
         if (match && pos.ch >= match.index && pos.ch <= match.index + match[0].length) {
-            var preview = "<div class='color-swatch' style='background:" + match[0] + ";'></div>";
+            var preview = "<div class='color-swatch' style='background:" + prefix + (colorValue || match[0]) + ";'></div>";
             var startPos = {line: pos.line, ch: match.index},
                 endPos = {line: pos.line, ch: match.index + match[0].length},
                 startCoords = cm.charCoords(startPos),
@@ -139,7 +159,6 @@ define(function (require, exports, module) {
             }
         }
         
-        
         hidePreview();
     }
     
@@ -199,7 +218,7 @@ define(function (require, exports, module) {
     // Load our stylesheet
     ExtensionUtils.loadStyleSheet(module, "HoverPreview.css");
     
-    /*Open Brackets src command*/
+    // Add menu command
     var ENABLE_HOVER_PREVIEW      = "Enable Hover Preview";
     var CMD_ENABLE_HOVER_PREVIEW  = "gruehle.enableHoverPreview";
 
