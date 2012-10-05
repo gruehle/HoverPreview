@@ -69,6 +69,7 @@ define(function (require, exports, module) {
         
         // TODO: Support plugin providers. For now we just hard-code...
         var cm = editor._codeMirror;
+        var editorWidth = $(editor.getRootElement).width();
         
         // Check for gradient
         var gradientRegEx = /-webkit-gradient\([^;]*;?|(-moz-|-ms-|-o-|-webkit-|\s)(linear-gradient\([^;]*);?|(-moz-|-ms-|-o-|-webkit-)(radial-gradient\([^;]*);?/;
@@ -94,13 +95,13 @@ define(function (require, exports, module) {
         
         var match = gradientMatch || colorMatch;
         if (match && pos.ch >= match.index && pos.ch <= match.index + match[0].length) {
-            var preview = "<div class='color-swatch' style='background:" + prefix + (colorValue || match[0]) + ";'></div>";
+            var preview = "<div class='color-swatch-bg'><div class='color-swatch' style='background:" + prefix + (colorValue || match[0]) + ";'></div></div>";
             var startPos = {line: pos.line, ch: match.index},
                 endPos = {line: pos.line, ch: match.index + match[0].length},
                 startCoords = cm.charCoords(startPos),
                 xPos;
             
-            xPos = (cm.charCoords(endPos).x - startCoords.x) / 2 + startCoords.x;
+            xPos = (Math.min(cm.charCoords(endPos).x, editorWidth) - startCoords.x) / 2 + startCoords.x;
             showPreview(preview, xPos, startCoords.y);
             previewMark = cm.markText(
                 startPos,
