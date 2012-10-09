@@ -6,8 +6,11 @@ me know, or even better, submit a pull request.
 
 ## Usage
 
-Copy this folder into the Brackets `extensions/user` folder and restart Brackets. When the cursor is over a gradient value, color value or 
-an image name, a preview of the value is shown.
+1. [Download](https://github.com/gruehle/HoverPreview/zipball/master) and unzip it; or clone this repo on GitHub
+2. Copy the copied/cloned folder into the Brackets `extensions/user` folder
+3. Restart Brackets. 
+
+When the cursor is over a gradient value, color value or an image name, a preview of the value is shown.
 
 ## Screenshots
 
