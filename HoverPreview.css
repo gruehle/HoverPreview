@@ -14,7 +14,7 @@
 
 #hover-preview-container .color-swatch-bg {
     background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAChJREFUeNpiPHPmDAMMGBsbw9lMDDgA6RKM%2F%2F%2F%2Fh3POnj1LCzsAAgwAQtYIcFfEyzkAAAAASUVORK5CYII%3D');
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.10);
 }
 
 #hover-preview-container .color-swatch {
@@ -33,13 +33,14 @@
 }
 
 .preview-bubble {
+    border: 1px solid rgba(0, 0, 0, 0.10);
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 .preview-bubble:before {
     border-bottom: 25px solid transparent;
-    border-right: 25px solid #eee;
+    border-right: 25px solid rgba(0, 0, 0, 0.1);
     bottom: -13px;
     content: '';
     position: absolute;

@@ -21,7 +21,7 @@
  */
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true,  regexp: true, indent: 4, maxerr: 50 */
-/*global define, brackets, $, window, tinycolor */
+/*global define, brackets, $, window */
 
 define(function (require, exports, module) {
     "use strict";
@@ -69,7 +69,7 @@ define(function (require, exports, module) {
         
         // TODO: Support plugin providers. For now we just hard-code...
         var cm = editor._codeMirror;
-        var editorWidth = $(editor.getRootElement).width();
+        var editorWidth = $(editor.getRootElement()).width();
         
         // Check for gradient
         var gradientRegEx = /-webkit-gradient\([^;]*;?|(-moz-|-ms-|-o-|-webkit-|\s)(linear-gradient\([^;]*);?|(-moz-|-ms-|-o-|-webkit-)(radial-gradient\([^;]*);?/;
@@ -197,7 +197,7 @@ define(function (require, exports, module) {
             }
         }
         
-        if (editor) {
+        if (editor && editor._codeMirror) {
             var cm = editor._codeMirror;
             var pos = cm.coordsChar({x: event.clientX, y: event.clientY});
             var token = cm.getTokenAt(pos);
