@@ -28,3 +28,16 @@ Hovering over an image filename:
 ## Future
 
 Add plug-in mechanism so other value providers can be added.
+
+## History
+
+* 28jan13 v0.3 - Changes:
+  * Handle absolute URLs for images
+  * Fixed flickering on image preview
+  * Position preview below selection if it doesn't fit above
+  * Made highlighting translucent so it doesn't block selection highlight
+  * Support color names
+  * Improve color matching regex
+  * Fix intermittent uncaught exception
+* 19oct12 v0.2 - Visual tweaks & bug fixes
+* 04oct12 v0.1 - Initial Release

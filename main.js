@@ -21,7 +21,7 @@
  */
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true,  regexp: true, indent: 4, maxerr: 50 */
-/*global define, brackets, $, window */
+/*global define, brackets, $, window, PathUtils */
 
 define(function (require, exports, module) {
     "use strict";
@@ -37,6 +37,8 @@ define(function (require, exports, module) {
         previewMark,        // CodeMirror marker highlighting the preview text
         $previewContainer;  // Preview container
     
+    var currentImagePreviewContent = "";  // Current image preview content, or "" if no content is showing.
+    
     function hidePreview() {
         if (previewMark) {
             previewMark.clear();
@@ -44,16 +46,35 @@ define(function (require, exports, module) {
         }
         $previewContainer.empty();
         $previewContainer.hide();
+        currentImagePreviewContent = "";
     }
     
-    function showPreview(content, xpos, ypos) {
+    function positionPreview(xpos, ypos, ybot) {
+        var top = ypos - $previewContainer.height() - 38;
+        
+        if (top < 0) {
+            $previewContainer.removeClass("preview-bubble");
+            $previewContainer.addClass("preview-bubble-below");
+            top = ybot + 16;
+            $previewContainer.offset({
+                left: xpos - $previewContainer.width() / 2 - 10,
+                top: top
+            });
+        } else {
+            $previewContainer.removeClass("preview-bubble-below");
+            $previewContainer.addClass("preview-bubble");
+            $previewContainer.offset({
+                left: xpos - $previewContainer.width() / 2 - 10,
+                top: top
+            });
+        }
+    }
+    
+    function showPreview(content, xpos, ypos, ybot) {
         hidePreview();
         $previewContainer.append(content);
         $previewContainer.show();
-        $previewContainer.offset({
-            left: xpos - $previewContainer.width() / 2 - 10,
-            top: ypos - $previewContainer.height() - 38
-        });
+        positionPreview(xpos, ypos, ybot);
     }
     
     function divContainsMouse($div, event) {
@@ -69,6 +90,11 @@ define(function (require, exports, module) {
         
         // TODO: Support plugin providers. For now we just hard-code...
         var cm = editor._codeMirror;
+        
+        if (!cm || !editor) {
+            return;
+        }
+        
         var editorWidth = $(editor.getRootElement()).width();
         
         // Check for gradient
@@ -90,25 +116,28 @@ define(function (require, exports, module) {
         }
         
         // Check for color
-        var colorRegEx = /#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\( ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?\)|rgba\( ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b(1|0|0\.[0-9]{1,3}) ?\)|hsl\( ?\b([0-9]{1,2}|[12][0-9]{2}|3[0-5][0-9]|360)\b ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b([0-9]{1,2}|100)\b% ?\)|hsla\( ?\b([0-9]{1,2}|[12][0-9]{2}|3[0-5][0-9]|360)\b ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b(1|0|0\.[0-9]{1,3}) ?\)/i;
-        var colorMatch = line.match(colorRegEx);
+        var colorRegEx = /#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\( ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?\)|rgb\( ?\b([0-9]{1,2}%|100%) ?, ?\b([0-9]{1,2}%|100%) ?, ?\b([0-9]{1,2}%|100%) ?\)|rgba\( ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?\b([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\b ?, ?(1|0|0?\.[0-9]{1,3}) ?\)|rgba\( ?\b([0-9]{1,2}%|100%) ?, ?\b([0-9]{1,2}%|100%) ?, ?\b([0-9]{1,2}%|100%) ?, ?(1|0|0?\.[0-9]{1,3}) ?\)|hsl\( ?\b([0-9]{1,2}|[12][0-9]{2}|3[0-5][0-9]|360)\b ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b([0-9]{1,2}|100)\b% ?\)|hsla\( ?\b([0-9]{1,2}|[12][0-9]{2}|3[0-5][0-9]|360)\b ?, ?\b([0-9]{1,2}|100)\b% ?, ?\b([0-9]{1,2}|100)\b% ?, ?(1|0|0?\.[0-9]{1,3}) ?\)|\baliceblue\b|\bantiquewhite\b|\baqua\b|\baquamarine\b|\bazure\b|\bbeige\b|\bbisque\b|\bblack\b|\bblanchedalmond\b|\bblue\b|\bblueviolet\b|\bbrown\b|\bburlywood\b|\bcadetblue\b|\bchartreuse\b|\bchocolate\b|\bcoral\b|\bcornflowerblue\b|\bcornsilk\b|\bcrimson\b|\bcyan\b|\bdarkblue\b|\bdarkcyan\b|\bdarkgoldenrod\b|\bdarkgray\b|\bdarkgreen\b|\bdarkgrey\b|\bdarkkhaki\b|\bdarkmagenta\b|\bdarkolivegreen\b|\bdarkorange\b|\bdarkorchid\b|\bdarkred\b|\bdarksalmon\b|\bdarkseagreen\b|\bdarkslateblue\b|\bdarkslategray\b|\bdarkslategrey\b|\bdarkturquoise\b|\bdarkviolet\b|\bdeeppink\b|\bdeepskyblue\b|\bdimgray\b|\bdimgrey\b|\bdodgerblue\b|\bfirebrick\b|\bfloralwhite\b|\bforestgreen\b|\bfuchsia\b|\bgainsboro\b|\bghostwhite\b|\bgold\b|\bgoldenrod\b|\bgray\b|\bgreen\b|\bgreenyellow\b|\bgrey\b|\bhoneydew\b|\bhotpink\b|\bindianred\b|\bindigo\b|\bivory\b|\bkhaki\b|\blavender\b|\blavenderblush\b|\blawngreen\b|\blemonchiffon\b|\blightblue\b|\blightcoral\b|\blightcyan\b|\blightgoldenrodyellow\b|\blightgray\b|\blightgreen\b|\blightgrey\b|\blightpink\b|\blightsalmon\b|\blightseagreen\b|\blightskyblue\b|\blightslategray\b|\blightslategrey\b|\blightsteelblue\b|\blightyellow\b|\blime\b|\blimegreen\b|\blinen\b|\bmagenta\b|\bmaroon\b|\bmediumaquamarine\b|\bmediumblue\b|\bmediumorchid\b|\bmediumpurple\b|\bmediumseagreen\b|\bmediumslateblue\b|\bmediumspringgreen\b|\bmediumturquoise\b|\bmediumvioletred\b|\bmidnightblue\b|\bmintcream\b|\bmistyrose\b|\bmoccasin\b|\bnavajowhite\b|\bnavy\b|\boldlace\b|\bolive\b|\bolivedrab\b|\borange\b|\borangered\b|\borchid\b|\bpalegoldenrod\b|\bpalegreen\b|\bpaleturquoise\b|\bpalevioletred\b|\bpapayawhip\b|\bpeachpuff\b|\bperu\b|\bpink\b|\bplum\b|\bpowderblue\b|\bpurple\b|\bred\b|\brosybrown\b|\broyalblue\b|\bsaddlebrown\b|\bsalmon\b|\bsandybrown\b|\bseagreen\b|\bseashell\b|\bsienna\b|\bsilver\b|\bskyblue\b|\bslateblue\b|\bslategray\b|\bslategrey\b|\bsnow\b|\bspringgreen\b|\bsteelblue\b|\btan\b|\bteal\b|\bthistle\b|\btomato\b|\bturquoise\b|\bviolet\b|\bwheat\b|\bwhite\b|\bwhitesmoke\b|\byellow\b|\byellowgreen\b/gi;
+        var colorMatch = colorRegEx.exec(line);
         
         var match = gradientMatch || colorMatch;
-        if (match && pos.ch >= match.index && pos.ch <= match.index + match[0].length) {
-            var preview = "<div class='color-swatch-bg'><div class='color-swatch' style='background:" + prefix + (colorValue || match[0]) + ";'></div></div>";
-            var startPos = {line: pos.line, ch: match.index},
-                endPos = {line: pos.line, ch: match.index + match[0].length},
-                startCoords = cm.charCoords(startPos),
-                xPos;
-            
-            xPos = (Math.min(cm.charCoords(endPos).x, editorWidth) - startCoords.x) / 2 + startCoords.x;
-            showPreview(preview, xPos, startCoords.y);
-            previewMark = cm.markText(
-                startPos,
-                endPos,
-                "preview-highlight"
-            );
-            return;
+        while (match) {
+            if (match && pos.ch >= match.index && pos.ch <= match.index + match[0].length) {
+                var preview = "<div class='color-swatch-bg'><div class='color-swatch' style='background:" + prefix + (colorValue || match[0]) + ";'></div></div>";
+                var startPos = {line: pos.line, ch: match.index},
+                    endPos = {line: pos.line, ch: match.index + match[0].length},
+                    startCoords = cm.charCoords(startPos),
+                    xPos;
+                
+                xPos = (cm.charCoords(endPos).x - startCoords.x) / 2 + startCoords.x;
+                showPreview(preview, xPos, startCoords.y, startCoords.yBot);
+                previewMark = cm.markText(
+                    startPos,
+                    endPos,
+                    "preview-highlight"
+                );
+                return;
+            }
+            match = colorRegEx.exec(line);
         }
         
         // Check for image name
@@ -129,7 +158,13 @@ define(function (require, exports, module) {
             if (/(\.gif|\.png|\.jpg|\.jpeg|\.svg)$/i.test(tokenString)) {
                 var sPos, ePos;
                 var docPath = editor.document.file.fullPath;
-                var imgPath = docPath.substr(0, docPath.lastIndexOf("/") + 1) + tokenString;
+                var imgPath;
+                
+                if (PathUtils.isAbsoluteUrl(tokenString)) {
+                    imgPath = tokenString;
+                } else {
+                    imgPath = "file:///" + docPath.substr(0, docPath.lastIndexOf("/") + 1) + tokenString;
+                }
                 
                 if (urlMatch) {
                     sPos = {line: pos.line, ch: urlMatch.index};
@@ -140,21 +175,27 @@ define(function (require, exports, module) {
                 }
                 
                 if (imgPath) {
-                    var imgPreview = "<div class='image-preview'><img src=\"file:///" + imgPath + "\"></div>";
-                    var coord = cm.charCoords(sPos);
-                    showPreview(imgPreview, (cm.charCoords(ePos).x - coord.x) / 2 + coord.x, coord.y);
-                    
-                    // Hide the preview container until the image is loaded.
-                    $previewContainer.hide();
-                    $previewContainer.find("img").on("load", function () {
-                        $previewContainer.show();
-                    });
-                    
-                    previewMark = cm.markText(
-                        sPos,
-                        ePos,
-                        "preview-highlight"
-                    );
+                    var imgPreview = "<div class='image-preview'><img src=\"" + imgPath + "\"></div>";
+                    if (imgPreview !== currentImagePreviewContent) {
+                        var coord = cm.charCoords(sPos);
+                        var xpos = (cm.charCoords(ePos).x - coord.x) / 2 + coord.x;
+                        var ypos = coord.y;
+                        var ybot = coord.yBot;
+                        showPreview(imgPreview, xpos, ypos, ybot);
+                        
+                        // Hide the preview container until the image is loaded.
+                        $previewContainer.hide();
+                        $previewContainer.find("img").on("load", function () {
+                            $previewContainer.show();
+                            positionPreview(xpos, ypos, ybot);
+                        });
+                        previewMark = cm.markText(
+                            sPos,
+                            ePos,
+                            "preview-highlight"
+                        );
+                        currentImagePreviewContent = imgPreview;
+                    }
                     return;
                 }
             }
