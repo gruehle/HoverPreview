@@ -21,7 +21,7 @@
  */
 
 /*jslint vars: true, plusplus: true, devel: true, nomen: true,  regexp: true, indent: 4, maxerr: 50 */
-/*global define, brackets, $, window, PathUtils */
+/*global define, brackets, $, window, PathUtils, CodeMirror */
 
 define(function (require, exports, module) {
     "use strict";
@@ -86,6 +86,37 @@ define(function (require, exports, module) {
                 event.clientY <= offset.top + $div.height());
     }
     
+    function charCoords(cm, pos) {
+        var coords = cm.charCoords(pos);
+        
+        // CodeMirror 2 uses x, y, ybot
+        // CodeMirror 3 uses left, top, bottom
+        // Since this code was written for CodeMirror 2, return 
+        // a CM2-normalized struct
+        return {
+            x: coords.x || coords.left,
+            y: coords.y || coords.top,
+            ybot: coords.ybot || coords.bottom
+        };
+    }
+    
+    function coordsChar(cm, coords) {
+        if (CodeMirror.version) {
+            coords.left = coords.x;
+            coords.top = coords.y;
+        }
+        
+        return cm.coordsChar(coords);
+    }
+    
+    function markText(cm, start, end, className) {
+        if (CodeMirror.version) {
+            return cm.markText(start, end, {className: className});
+        } else {
+            return cm.markText(start, end, className);
+        }
+    }
+    
     function queryPreviewProviders(editor, pos, token, line, event) {
         
         // TODO: Support plugin providers. For now we just hard-code...
@@ -125,12 +156,13 @@ define(function (require, exports, module) {
                 var preview = "<div class='color-swatch-bg'><div class='color-swatch' style='background:" + prefix + (colorValue || match[0]) + ";'></div></div>";
                 var startPos = {line: pos.line, ch: match.index},
                     endPos = {line: pos.line, ch: match.index + match[0].length},
-                    startCoords = cm.charCoords(startPos),
+                    startCoords = charCoords(cm, startPos),
                     xPos;
                 
-                xPos = (cm.charCoords(endPos).x - startCoords.x) / 2 + startCoords.x;
+                xPos = (charCoords(cm, endPos).x - startCoords.x) / 2 + startCoords.x;
                 showPreview(preview, xPos, startCoords.y, startCoords.yBot);
-                previewMark = cm.markText(
+                previewMark = markText(
+                    cm,
                     startPos,
                     endPos,
                     "preview-highlight"
@@ -177,8 +209,8 @@ define(function (require, exports, module) {
                 if (imgPath) {
                     var imgPreview = "<div class='image-preview'><img src=\"" + imgPath + "\"></div>";
                     if (imgPreview !== currentImagePreviewContent) {
-                        var coord = cm.charCoords(sPos);
-                        var xpos = (cm.charCoords(ePos).x - coord.x) / 2 + coord.x;
+                        var coord = charCoords(cm, sPos);
+                        var xpos = (charCoords(cm, ePos).x - coord.x) / 2 + coord.x;
                         var ypos = coord.y;
                         var ybot = coord.yBot;
                         showPreview(imgPreview, xpos, ypos, ybot);
@@ -189,7 +221,8 @@ define(function (require, exports, module) {
                             $previewContainer.show();
                             positionPreview(xpos, ypos, ybot);
                         });
-                        previewMark = cm.markText(
+                        previewMark = markText(
+                            cm,
                             sPos,
                             ePos,
                             "preview-highlight"
@@ -240,7 +273,7 @@ define(function (require, exports, module) {
         
         if (editor && editor._codeMirror) {
             var cm = editor._codeMirror;
-            var pos = cm.coordsChar({x: event.clientX, y: event.clientY});
+            var pos = coordsChar(cm, {x: event.clientX, y: event.clientY});
             var token = cm.getTokenAt(pos);
             var line = cm.getLine(pos.line);
             
