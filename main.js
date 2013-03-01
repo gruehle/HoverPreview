@@ -96,7 +96,7 @@ define(function (require, exports, module) {
         return {
             x: coords.x || coords.left,
             y: coords.y || coords.top,
-            ybot: coords.ybot || coords.bottom
+            yBot: coords.ybot || coords.bottom
         };
     }
     
