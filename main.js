@@ -31,9 +31,14 @@ define(function (require, exports, module) {
         EditorManager       = brackets.getModule("editor/EditorManager"),
         ExtensionUtils      = brackets.getModule("utils/ExtensionUtils"),
         Menus               = brackets.getModule("command/Menus"),
+        PreferencesManager  = brackets.getModule("preferences/PreferencesManager"),
         ProjectManager      = brackets.getModule("project/ProjectManager");
     
+    var PREFERENCES_CLIENT_ID = "gruehle.hoverPreview",
+        defaultPrefs = { enabled: true };
+    
     var enabled = true,     // Only show preview if true
+        prefs = null,       // Preferences
         previewMark,        // CodeMirror marker highlighting the preview text
         $previewContainer;  // Preview container
     
@@ -301,16 +306,29 @@ define(function (require, exports, module) {
         CommandManager.get(CMD_ENABLE_HOVER_PREVIEW).setChecked(enabled);
     }
 
-    function toggleEnableHoverPreview() {
-        enabled = !enabled;
-        if (!enabled) {
-            hidePreview();
+    function setEnabled(_enabled) {
+        if (enabled !== _enabled) {
+            enabled = _enabled;
+            if (!enabled) {
+                hidePreview();
+            }
+            prefs.setValue("enabled", enabled);
         }
+        // Always update the checkmark, even if the enabled flag hasn't changed.
         updateMenuItemCheckmark();
+    }
+    
+    function toggleEnableHoverPreview() {
+        setEnabled(!enabled);
     }
       
     CommandManager.register(ENABLE_HOVER_PREVIEW, CMD_ENABLE_HOVER_PREVIEW, toggleEnableHoverPreview);
     var menu = Menus.getMenu(Menus.AppMenuBar.VIEW_MENU);
     menu.addMenuItem(CMD_ENABLE_HOVER_PREVIEW);
-    updateMenuItemCheckmark();
+    
+    // Init PreferenceStorage
+    prefs = PreferencesManager.getPreferenceStorage(PREFERENCES_CLIENT_ID, defaultPrefs);
+
+    // Setup initial UI state
+    setEnabled(prefs.getValue("enabled"));
 });
