@@ -30,6 +30,17 @@
 
 #hover-preview-container .image-preview img {
     max-width: 100%;
+    margin-bottom: -5px;
+}
+
+#hover-preview-container .img-size {
+    font-size: 0.85em;
+    color: #aaa;
+    margin-top: -5px;
+}
+
+#hover-preview-container.small-padding-bottom {
+    padding-bottom: 3px;
 }
 
 .preview-bubble, .preview-bubble-below {

@@ -31,6 +31,7 @@ Add plug-in mechanism so other value providers can be added.
 
 ## History
 
+* 21mar13 v0.4 - Add image size
 * 14feb13 v0.3.1 - Make work with Brackets Sprint 20 (no functional changes)
 * 28jan13 v0.3 - Changes:
   * Handle absolute URLs for images

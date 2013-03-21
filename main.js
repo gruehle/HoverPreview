@@ -51,6 +51,7 @@ define(function (require, exports, module) {
         }
         $previewContainer.empty();
         $previewContainer.hide();
+        $previewContainer.removeClass("small-padding-bottom");
         currentImagePreviewContent = "";
     }
     
@@ -158,7 +159,11 @@ define(function (require, exports, module) {
         var match = gradientMatch || colorMatch;
         while (match) {
             if (match && pos.ch >= match.index && pos.ch <= match.index + match[0].length) {
-                var preview = "<div class='color-swatch-bg'><div class='color-swatch' style='background:" + prefix + (colorValue || match[0]) + ";'></div></div>";
+                var preview = "<div class='color-swatch-bg'>"                           +
+                              "    <div class='color-swatch' style='background:"        +
+                                        prefix + (colorValue || match[0]) + ";'>"       +
+                              "    </div>"                                              +
+                              "</div>";
                 var startPos = {line: pos.line, ch: match.index},
                     endPos = {line: pos.line, ch: match.index + match[0].length},
                     startCoords = charCoords(cm, startPos),
@@ -212,7 +217,9 @@ define(function (require, exports, module) {
                 }
                 
                 if (imgPath) {
-                    var imgPreview = "<div class='image-preview'><img src=\"" + imgPath + "\"></div>";
+                    var imgPreview = "<div class='image-preview'>"          +
+                                     "    <img src=\"" + imgPath + "\">"    +
+                                     "</div>";
                     if (imgPreview !== currentImagePreviewContent) {
                         var coord = charCoords(cm, sPos);
                         var xpos = (charCoords(cm, ePos).x - coord.x) / 2 + coord.x;
@@ -223,6 +230,13 @@ define(function (require, exports, module) {
                         // Hide the preview container until the image is loaded.
                         $previewContainer.hide();
                         $previewContainer.find("img").on("load", function () {
+                            $previewContainer.find(".image-preview")
+                                .append("<br/>"                                                 +
+                                        "<span class='img-size'>"                               +
+                                                this.naturalWidth + " x " + this.naturalHeight  +
+                                        "</span>"
+                                    );
+                            $previewContainer.addClass("small-padding-bottom");
                             $previewContainer.show();
                             positionPreview(xpos, ypos, ybot);
                         });
