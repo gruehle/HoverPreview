@@ -1,0 +1,6 @@
+{
+	"name": "gruehle-hover-preview",
+    "title": "Hover Preview",
+    "description": "Shows a preview when the mouse is hovered over a color, gradiant, or image filename.",
+    "version": "0.4.0"
+}
