@@ -1,3 +1,9 @@
+## NOTE: Hover Preview was merged into Brackets Sprint 24
+
+### This repo is for historical purposes only
+
+---
+
 ## Hover Preview
 This is a [Brackets](https://github.com/adobe/brackets) extension that shows a preview when the cursor is hovered over certain items. 
 
@@ -30,7 +36,7 @@ Hovering over an image filename:
 Add plug-in mechanism so other value providers can be added.
 
 ## History
-
+* 01may13 - This extension is now deprecated. All functionality has been merged into Brackets.
 * 21mar13 v0.4 - Add image size
 * 14feb13 v0.3.1 - Make work with Brackets Sprint 20 (no functional changes)
 * 28jan13 v0.3 - Changes:
